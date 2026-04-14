@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#44BBA4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GrindSchedule">
+<title>Mayank's Grind Schedule</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080A0E;--surface:#0E1117;--card:#141921;--border:#1C2333;
+  --text:#E2E8F0;--muted:#64748B;--accent:#44BBA4;--accent2:#3AA392;
+  --red:#EF4444;--blue:#3B82F6;--orange:#F59E0B;--purple:#8B5CF6;--green:#22C55E;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+::-webkit-scrollbar{display:none}
+html,body{overscroll-behavior:none;scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Outfit',sans-serif;
+  min-height:100vh;min-height:100dvh;
+  padding:env(safe-area-inset-top) 0 100px;
+}
+
+/* === NAV TABS === */
+.nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:linear-gradient(180deg,transparent,var(--bg) 20%);
+  padding:8px 16px env(safe-area-inset-bottom);
+  display:flex;gap:4px;
+}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:8px 4px;border:none;border-radius:12px;
+  background:transparent;color:var(--muted);
+  font-family:'Outfit',sans-serif;font-size:10px;font-weight:500;cursor:pointer;
+  transition:all .2s;
+}
+.nav-btn.active{color:var(--accent);background:rgba(68,187,164,.08)}
+.nav-btn svg{width:20px;height:20px}
+
+/* === PAGES === */
+.page{display:none;padding:16px}
+.page.active{display:block}
+
+/* === HEADER === */
+.top-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px 8px;
+}
+.top-bar h2{font-size:18px;font-weight:700}
+.streak-badge{
+  display:flex;align-items:center;gap:5px;
+  padding:5px 12px;border-radius:20px;
+  background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(239,68,68,.08));
+  border:1px solid rgba(245,158,11,.2);
+  font-size:12px;font-weight:600;color:var(--orange);
+}
+
+/* === DAY SELECTOR === */
+.day-scroll{display:flex;gap:6px;padding:12px 16px;overflow-x:auto}
+.day-chip{
+  position:relative;min-width:52px;padding:8px 6px;
+  border:1px solid var(--border);border-radius:12px;
+  background:var(--surface);color:var(--muted);
+  font-size:11px;font-weight:500;cursor:pointer;
+  text-align:center;transition:all .2s;font-family:'Outfit',sans-serif;
+}
+.day-chip .day-name{font-weight:600;font-size:12px;display:block}
+.day-chip .day-date{font-size:10px;opacity:.6;margin-top:1px}
+.day-chip.active{border-color:var(--accent);background:rgba(68,187,164,.08);color:var(--accent)}
+.day-chip.today::after{content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--accent)}
+.day-chip .check-dot{position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%}
+
+/* === PROGRESS RING === */
+.progress-section{
+  display:flex;align-items:center;gap:16px;
+  padding:14px 16px;margin:0 16px 12px;
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;
+}
+.ring-wrap{position:relative;width:64px;height:64px;flex-shrink:0}
+.ring-wrap svg{transform:rotate(-90deg)}
+.ring-text{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+}
+.ring-pct{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--accent)}
+.ring-label{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.progress-stats{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.mini-stat{padding:6px 8px;background:var(--card);border-radius:8px}
+.mini-stat .ms-val{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700}
+.mini-stat .ms-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+
+/* === GYM BADGE === */
+.gym-strip{
+  margin:0 16px 12px;padding:10px 14px;border-radius:12px;
+  display:flex;align-items:center;gap:10px;
+}
+.gym-strip.on{background:linear-gradient(135deg,rgba(239,68,68,.08),rgba(239,68,68,.03));border:1px solid rgba(239,68,68,.15)}
+.gym-strip.off{background:linear-gradient(135deg,rgba(139,92,246,.08),rgba(139,92,246,.03));border:1px solid rgba(139,92,246,.15)}
+.gym-strip .g-icon{font-size:16px}
+.gym-strip .g-text{font-size:13px;font-weight:600}
+.gym-strip .g-text.on{color:var(--red)}
+.gym-strip .g-text.off{color:var(--purple)}
+
+/* === TASK LIST === */
+.task-list{padding:0 16px}
+.task-item{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:12px;margin-bottom:6px;
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  transition:all .3s;cursor:pointer;
+  animation:fadeIn .25s ease both;
+}
+.task-item.done{opacity:.5;background:rgba(34,197,94,.03);border-color:rgba(34,197,94,.12)}
+.task-item.done .task-name{text-decoration:line-through;color:var(--muted)}
+.task-item.current-task{border-color:rgba(68,187,164,.3);box-shadow:0 0 20px rgba(68,187,164,.08)}
+
+.checkbox{
+  width:22px;height:22px;flex-shrink:0;margin-top:1px;
+  border:2px solid var(--border);border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;
+}
+.task-item.done .checkbox{background:var(--green);border-color:var(--green)}
+.checkbox svg{width:12px;height:12px;opacity:0;transition:all .2s}
+.task-item.done .checkbox svg{opacity:1}
+
+.task-body{flex:1;min-width:0}
+.task-top{display:flex;align-items:center;gap:6px;margin-bottom:2px}
+.task-time{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700}
+.task-dur{font-size:9px;color:var(--muted);background:var(--card);padding:1px 6px;border-radius:6px;margin-left:auto}
+.now-tag{font-size:8px;color:var(--accent);background:rgba(68,187,164,.12);padding:1px 6px;border-radius:6px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;animation:pulse 2s infinite}
+.task-name{font-size:13px;font-weight:500;line-height:1.35;color:var(--text)}
+.type-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:2px}
+
+/* === FILTERS === */
+.filter-row{display:flex;gap:6px;padding:8px 16px;flex-wrap:wrap;margin-bottom:4px}
+.f-pill{
+  padding:5px 10px;border-radius:16px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);font-size:11px;font-weight:600;
+  cursor:pointer;font-family:'Outfit',sans-serif;transition:all .15s;
+}
+.f-pill.on{border-color:var(--fc);color:var(--fc);background:var(--fbg)}
+
+/* === STATS PAGE === */
+.stats-card{
+  margin:0 0 12px;padding:16px;
+  background:var(--surface);border:1px solid var(--border);border-radius:16px;
+}
+.stats-card h3{font-size:14px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.week-grid .wg-day{font-size:9px;color:var(--muted);font-weight:600;padding:4px 0}
+.week-grid .wg-cell{
+  aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;
+}
+
+.heatmap-row{display:flex;gap:3px;margin-bottom:8px;align-items:center}
+.heatmap-label{font-size:10px;color:var(--muted);width:28px;flex-shrink:0;text-align:right;margin-right:4px}
+.heatmap-cell{
+  flex:1;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:600;color:var(--text);transition:all .2s;
+}
+
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.bar-label{font-size:11px;color:var(--muted);width:70px;flex-shrink:0}
+.bar-track{flex:1;height:20px;background:var(--card);border-radius:6px;overflow:hidden}
+.bar-fill{height:100%;border-radius:6px;transition:width .5s ease;display:flex;align-items:center;padding-left:8px;font-size:10px;font-weight:600;color:var(--bg)}
+
+.big-number{font-family:'JetBrains Mono',monospace;font-size:36px;font-weight:800;line-height:1}
+.big-label{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* === SETTINGS PAGE === */
+.setting-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;margin-bottom:6px;
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+}
+.setting-item .s-left{display:flex;align-items:center;gap:10px}
+.setting-item .s-icon{font-size:18px}
+.setting-item .s-text{font-size:13px;font-weight:500}
+.setting-item .s-sub{font-size:11px;color:var(--muted)}
+.danger-btn{
+  padding:10px 20px;border:1px solid rgba(239,68,68,.3);border-radius:12px;
+  background:rgba(239,68,68,.08);color:var(--red);
+  font-size:13px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;
+  width:100%;margin-top:12px;
+}
+.toggle{
+  width:44px;height:24px;border-radius:12px;padding:2px;cursor:pointer;
+  background:var(--border);transition:all .2s;border:none;
+}
+.toggle.on{background:var(--accent)}
+.toggle-knob{width:20px;height:20px;border-radius:50%;background:#fff;transition:all .2s}
+.toggle.on .toggle-knob{transform:translateX(20px)}
+
+/* === INSTALL BANNER === */
+.install-bar{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  background:linear-gradient(135deg,var(--card),var(--surface));
+  border-bottom:1px solid var(--accent)30;
+  padding:10px 16px;display:flex;align-items:center;gap:10px;
+  animation:slideDown .4s ease;
+}
+.install-bar.hidden{display:none}
+.install-bar .ib-text{flex:1;font-size:12px;font-weight:500}
+.install-bar .ib-btn{
+  padding:6px 16px;border:none;border-radius:8px;
+  background:var(--accent);color:var(--bg);font-weight:700;font-size:12px;cursor:pointer;
+  font-family:'Outfit',sans-serif;
+}
+.install-bar .ib-x{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+</style>
+</head>
+<body>
+
+<!-- Install Banner -->
+<div class="install-bar hidden" id="installBanner">
+  <span class="ib-text">📲 Install Grind Schedule as an app</span>
+  <button class="ib-btn" id="installBtn">Install</button>
+  <button class="ib-x" id="installX">✕</button>
+</div>
+
+<!-- Page: Schedule -->
+<div class="page active" id="pageSchedule">
+  <div class="top-bar">
+    <h2>📋 Schedule</h2>
+    <div class="streak-badge" id="streakBadge">🔥 0 day streak</div>
+  </div>
+  <div class="day-scroll" id="dayScroll"></div>
+  <div id="progressRing"></div>
+  <div id="gymBadge"></div>
+  <div class="filter-row" id="filters"></div>
+  <div class="task-list" id="taskList"></div>
+</div>
+
+<!-- Page: Stats -->
+<div class="page" id="pageStats">
+  <div class="top-bar"><h2>📊 Analytics</h2></div>
+  <div style="padding:0 16px" id="statsContent"></div>
+</div>
+
+<!-- Page: Settings -->
+<div class="page" id="pageSettings">
+  <div class="top-bar"><h2>⚙️ Settings</h2></div>
+  <div style="padding:0 16px" id="settingsContent"></div>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="switchPage('Schedule')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Schedule
+  </button>
+  <button class="nav-btn" onclick="switchPage('Stats')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+    Analytics
+  </button>
+  <button class="nav-btn" onclick="switchPage('Settings')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Settings
+  </button>
+</nav>
+
+<script>
+// ========== DATA ==========
+const DAYS=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const DSHORT=["MON","TUE","WED","THU","FRI","SAT","SUN"];
+const TC={
+  gym:{color:"#EF4444",icon:"🏋️",label:"Gym"},
+  work:{color:"#3B82F6",icon:"🎬",label:"YouTube"},
+  household:{color:"#F59E0B",icon:"🏠",label:"Household"},
+  routine:{color:"#64748B",icon:"☀️",label:"Routine"},
+  personal:{color:"#44BBA4",icon:"✨",label:"Personal"},
+  sleep:{color:"#8B5CF6",icon:"🌙",label:"Sleep"}
+};
+const GYM={Monday:"Chest + Triceps + Core",Tuesday:"Back + Biceps",Wednesday:"Legs + Shoulders",Thursday:"Chest + Back + Core",Friday:"Arms + Shoulders",Saturday:"Full Body Compound",Sunday:null};
+
+const S={
+Monday:[
+{t:"4:30 AM",k:"Wake Up + Hydrate + Freshen Up",y:"routine",d:"20 min",id:"m0"},
+{t:"5:00 AM",k:"Gym — Chest + Triceps + Core",y:"gym",d:"90 min",id:"m1"},
+{t:"6:30 AM",k:"Post-Workout Shower + Breakfast",y:"routine",d:"40 min",id:"m2"},
+{t:"7:10 AM",k:"Quick Household — Kitchen cleanup / Laundry start",y:"household",d:"20 min",id:"m3"},
+{t:"7:30 AM",k:"Deep Work — Scripting + Editing (3 videos)",y:"work",d:"5 hrs",id:"m4"},
+{t:"12:30 PM",k:"Lunch Break + Rest",y:"routine",d:"45 min",id:"m5"},
+{t:"1:15 PM",k:"Deep Work — Thumbnails + Uploads + Scheduling",y:"work",d:"3 hrs",id:"m6"},
+{t:"4:15 PM",k:"Grocery / Market Run",y:"household",d:"45 min",id:"m7"},
+{t:"5:00 PM",k:"Evening Snack + Walk / Tech Exploration",y:"personal",d:"1 hr",id:"m8"},
+{t:"6:00 PM",k:"Dinner Prep + Dinner",y:"household",d:"1 hr",id:"m9"},
+{t:"7:00 PM",k:"Content Planning + Research for Next Day",y:"work",d:"1.5 hrs",id:"m10"},
+{t:"8:30 PM",k:"Wind Down — Reading / Relax",y:"personal",d:"1 hr",id:"m11"},
+{t:"9:30 PM",k:"Sleep",y:"sleep",d:"",id:"m12"}
+],
+Tuesday:[
+{t:"4:30 AM",k:"Wake Up + Hydrate + Freshen Up",y:"routine",d:"20 min",id:"t0"},
+{t:"5:00 AM",k:"Gym — Back + Biceps",y:"gym",d:"90 min",id:"t1"},
+{t:"6:30 AM",k:"Post-Workout Shower + Breakfast",y:"routine",d:"40 min",id:"t2"},
+{t:"7:10 AM",k:"Quick Household — Sweep / Organize Room",y:"household",d:"20 min",id:"t3"},
+{t:"7:30 AM",k:"Deep Work — Scripting + Editing (3 videos)",y:"work",d:"5 hrs",id:"t4"},
+{t:"12:30 PM",k:"Lunch Break + Power Nap",y:"routine",d:"45 min",id:"t5"},
+{t:"1:15 PM",k:"Deep Work — Thumbnails + Uploads + Scheduling",y:"work",d:"3 hrs",id:"t6"},
+{t:"4:15 PM",k:"Laundry / Ironing / Clothes Management",y:"household",d:"30 min",id:"t7"},
+{t:"4:45 PM",k:"Evening Snack + Walk / AI & Tech Reading",y:"personal",d:"1.25 hrs",id:"t8"},
+{t:"6:00 PM",k:"Dinner Prep + Dinner",y:"household",d:"1 hr",id:"t9"},
+{t:"7:00 PM",k:"Channel Analytics Review + Strategy",y:"work",d:"1.5 hrs",id:"t10"},
+{t:"8:30 PM",k:"Wind Down — Relax",y:"personal",d:"1 hr",id:"t11"},
+{t:"9:30 PM",k:"Sleep",y:"sleep",d:"",id:"t12"}
+],
+Wednesday:[
+{t:"4:30 AM",k:"Wake Up + Hydrate + Freshen Up",y:"routine",d:"20 min",id:"w0"},
+{t:"5:00 AM",k:"Gym — Legs + Shoulders",y:"gym",d:"90 min",id:"w1"},
+{t:"6:30 AM",k:"Post-Workout Shower + Breakfast",y:"routine",d:"40 min",id:"w2"},
+{t:"7:10 AM",k:"Quick Household — Kitchen deep clean",y:"household",d:"20 min",id:"w3"},
+{t:"7:30 AM",k:"Deep Work — Scripting + Editing (3 videos)",y:"work",d:"5 hrs",id:"w4"},
+{t:"12:30 PM",k:"Lunch Break + Rest",y:"routine",d:"45 min",id:"w5"},
+{t:"1:15 PM",k:"Deep Work — Thumbnails + Uploads + Scheduling",y:"work",d:"3 hrs",id:"w6"},
+{t:"4:15 PM",k:"Grocery / Essentials Restock",y:"household",d:"45 min",id:"w7"},
+{t:"5:00 PM",k:"Evening Snack + Dev / Side Project",y:"personal",d:"1 hr",id:"w8"},
+{t:"6:00 PM",k:"Dinner (Outside food day)",y:"routine",d:"45 min",id:"w9"},
+{t:"6:45 PM",k:"Batch — AI Image Prompts + Thumbnail Ideas",y:"work",d:"1.75 hrs",id:"w10"},
+{t:"8:30 PM",k:"Wind Down — Relax",y:"personal",d:"1 hr",id:"w11"},
+{t:"9:30 PM",k:"Sleep",y:"sleep",d:"",id:"w12"}
+],
+Thursday:[
+{t:"4:30 AM",k:"Wake Up + Hydrate + Freshen Up",y:"routine",d:"20 min",id:"th0"},
+{t:"5:00 AM",k:"Gym — Chest + Back + Core",y:"gym",d:"90 min",id:"th1"},
+{t:"6:30 AM",k:"Post-Workout Shower + Breakfast",y:"routine",d:"40 min",id:"th2"},
+{t:"7:10 AM",k:"Quick Household — Laundry + Room tidy",y:"household",d:"20 min",id:"th3"},
+{t:"7:30 AM",k:"Deep Work — Scripting + Editing (3 videos)",y:"work",d:"5 hrs",id:"th4"},
+{t:"12:30 PM",k:"Lunch Break + Power Nap",y:"routine",d:"45 min",id:"th5"},
+{t:"1:15 PM",k:"Deep Work — Thumbnails + Uploads + Scheduling",y:"work",d:"3 hrs",id:"th6"},
+{t:"4:15 PM",k:"Meal Prep — Cook for 2 days",y:"household",d:"1 hr",id:"th7"},
+{t:"5:15 PM",k:"Evening Snack + Free Time / Walk",y:"personal",d:"45 min",id:"th8"},
+{t:"6:00 PM",k:"Dinner",y:"routine",d:"30 min",id:"th9"},
+{t:"6:30 PM",k:"Content Research + Trending Topics",y:"work",d:"2 hrs",id:"th10"},
+{t:"8:30 PM",k:"Wind Down — Reading / Relax",y:"personal",d:"1 hr",id:"th11"},
+{t:"9:30 PM",k:"Sleep",y:"sleep",d:"",id:"th12"}
+],
+Friday:[
+{t:"4:30 AM",k:"Wake Up + Hydrate + Freshen Up",y:"routine",d:"20 min",id:"f0"},
+{t:"5:00 AM",k:"Gym — Arms + Shoulders",y:"gym",d:"90 min",id:"f1"},
+{t:"6:30 AM",k:"Post-Workout Shower + Breakfast",y:"routine",d:"40 min",id:"f2"},
+{t:"7:10 AM",k:"Quick Household — Sweep + Dust",y:"household",d:"20 min",id:"f3"},
+{t:"7:30 AM",k:"Deep Work — Scripting + Editing (3 videos)",y:"work",d:"5 hrs",id:"f4"},
+{t:"12:30 PM",k:"Lunch Break + Rest",y:"routine",d:"45 min",id:"f5"},
+{t:"1:15 PM",k:"Deep Work — Thumbnails + Uploads + Scheduling",y:"work",d:"3 hrs",id:"f6"},
+{t:"4:15 PM",k:"Weekly Room Deep Clean",y:"household",d:"45 min",id:"f7"},
+{t:"5:00 PM",k:"Evening Snack + AI / Tech Exploration",y:"personal",d:"1 hr",id:"f8"},
+{t:"6:00 PM",k:"Dinner Prep + Dinner",y:"household",d:"1 hr",id:"f9"},
+{t:"7:00 PM",k:"Week Review — Analytics + Plan Next Week",y:"work",d:"1.5 hrs",id:"f10"},
+{t:"8:30 PM",k:"Wind Down — Movie / Chill",y:"personal",d:"1 hr",id:"f11"},
+{t:"9:30 PM",k:"Sleep",y:"sleep",d:"",id:"f12"}
+],
+Saturday:[
+{t:"4:30 AM",k:"Wake Up + Hydrate + Freshen Up",y:"routine",d:"20 min",id:"s0"},
+{t:"5:00 AM",k:"Gym — Full Body Compound",y:"gym",d:"90 min",id:"s1"},
+{t:"6:30 AM",k:"Post-Workout Shower + Breakfast",y:"routine",d:"40 min",id:"s2"},
+{t:"7:10 AM",k:"Household — Big clean + Laundry + Organize",y:"household",d:"50 min",id:"s3"},
+{t:"8:00 AM",k:"Deep Work — Batch Script 4-5 videos ahead",y:"work",d:"4 hrs",id:"s4"},
+{t:"12:00 PM",k:"Lunch Break",y:"routine",d:"45 min",id:"s5"},
+{t:"12:45 PM",k:"Deep Work — Batch Thumbnails + Edits",y:"work",d:"3 hrs",id:"s6"},
+{t:"3:45 PM",k:"Grocery + Weekly Market Run",y:"household",d:"1 hr",id:"s7"},
+{t:"4:45 PM",k:"Evening Snack + Chill / Side Project",y:"personal",d:"1.25 hrs",id:"s8"},
+{t:"6:00 PM",k:"Dinner (Outside food day)",y:"routine",d:"45 min",id:"s9"},
+{t:"6:45 PM",k:"Skill Building — New editing / AI tools",y:"personal",d:"1.75 hrs",id:"s10"},
+{t:"8:30 PM",k:"Wind Down — Relax",y:"personal",d:"1 hr",id:"s11"},
+{t:"9:30 PM",k:"Sleep",y:"sleep",d:"",id:"s12"}
+],
+Sunday:[
+{t:"5:30 AM",k:"Wake Up (Sleep in!) + Freshen Up",y:"routine",d:"30 min",id:"su0"},
+{t:"6:00 AM",k:"Morning Walk / Stretching (Active Recovery)",y:"gym",d:"45 min",id:"su1"},
+{t:"6:45 AM",k:"Shower + Breakfast (Cook something nice)",y:"routine",d:"45 min",id:"su2"},
+{t:"7:30 AM",k:"Light Work — Schedule uploads + check comments",y:"work",d:"1.5 hrs",id:"su3"},
+{t:"9:00 AM",k:"Meal Prep — Cook for Mon-Tue",y:"household",d:"1.5 hrs",id:"su4"},
+{t:"10:30 AM",k:"Free Time — Explore / Learn / Projects",y:"personal",d:"1.5 hrs",id:"su5"},
+{t:"12:00 PM",k:"Lunch + Rest / Nap",y:"routine",d:"1.5 hrs",id:"su6"},
+{t:"1:30 PM",k:"Content Ideas + Research for the week",y:"work",d:"2 hrs",id:"su7"},
+{t:"3:30 PM",k:"Chill — Friends / Family Call / Entertainment",y:"personal",d:"2 hrs",id:"su8"},
+{t:"5:30 PM",k:"Evening Snack + Walk",y:"personal",d:"45 min",id:"su9"},
+{t:"6:15 PM",k:"Dinner Prep + Dinner",y:"household",d:"1 hr",id:"su10"},
+{t:"7:15 PM",k:"Week Planning — Lay out all 21 videos",y:"work",d:"1.25 hrs",id:"su11"},
+{t:"8:30 PM",k:"Wind Down — Journal / Reflect",y:"personal",d:"1 hr",id:"su12"},
+{t:"9:30 PM",k:"Sleep",y:"sleep",d:"",id:"su13"}
+]
+};
+
+// ========== STORAGE ==========
+function getDateKey(d){return d.toISOString().split('T')[0]}
+function loadData(){try{return JSON.parse(localStorage.getItem('grind_v2'))||{}}catch(e){return{}}}
+function saveData(d){localStorage.setItem('grind_v2',JSON.stringify(d))}
+function getCompleted(dateKey){const d=loadData();return d[dateKey]||[]}
+function toggleTask(dateKey,taskId){
+  const d=loadData();
+  if(!d[dateKey])d[dateKey]=[];
+  const idx=d[dateKey].indexOf(taskId);
+  if(idx>-1)d[dateKey].splice(idx,1);else d[dateKey].push(taskId);
+  saveData(d);
+}
+function getDayCompletion(dateKey,dayName){
+  const tasks=S[dayName];
+  if(!tasks)return 0;
+  const done=getCompleted(dateKey);
+  return done.filter(id=>tasks.some(t=>t.id===id)).length/tasks.length;
+}
+
+// ========== STREAK ==========
+function calcStreak(){
+  const data=loadData();
+  let streak=0;
+  const today=new Date();
+  for(let i=0;i<365;i++){
+    const d=new Date(today);
+    d.setDate(d.getDate()-i);
+    const key=getDateKey(d);
+    const dayIdx=d.getDay();
+    const dayName=DAYS[dayIdx===0?6:dayIdx-1];
+    const tasks=S[dayName];
+    if(!tasks)break;
+    const done=(data[key]||[]).filter(id=>tasks.some(t=>t.id===id)).length;
+    const pct=done/tasks.length;
+    if(i===0&&pct<0.5)continue; // today in progress
+    if(i>0&&pct<0.5)break;
+    if(pct>=0.5)streak++;
+  }
+  return streak;
+}
+
+// ========== TIME UTILS ==========
+function parseTime(s){const m=s.match(/(\d+):(\d+)\s*(AM|PM)/i);if(!m)return 0;let h=+m[1],min=+m[2];if(m[3].toUpperCase()==='PM'&&h!==12)h+=12;if(m[3].toUpperCase()==='AM'&&h===12)h=0;return h*60+min}
+function getCurrentIdx(tasks){const n=new Date(),nm=n.getHours()*60+n.getMinutes();let c=-1;for(let i=0;i<tasks.length;i++)if(parseTime(tasks[i].t)<=nm)c=i;return c}
+
+// ========== STATE ==========
+const todayDate=new Date();
+const todayDayIdx=(()=>{const d=todayDate.getDay();return d===0?6:d-1})();
+let selDay=todayDayIdx;
+let filt=null;
+let currentPage='Schedule';
+
+// ========== NAV ==========
+function switchPage(p){
+  currentPage=p;
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page'+p).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach((b,i)=>{
+    b.classList.toggle('active',['Schedule','Stats','Settings'][i]===p);
+  });
+  if(p==='Stats')renderStats();
+  if(p==='Settings')renderSettings();
+}
+
+// ========== RENDER SCHEDULE ==========
+function renderSchedule(){
+  const dayName=DAYS[selDay];
+  const allTasks=S[dayName];
+  const tasks=filt?allTasks.filter(t=>t.y===filt):allTasks;
+  const isToday=selDay===todayDayIdx;
+  const curIdx=isToday?getCurrentIdx(allTasks):-1;
+  const selDate=new Date(todayDate);
+  selDate.setDate(selDate.getDate()+(selDay-todayDayIdx));
+  const dateKey=getDateKey(selDate);
+  const completed=getCompleted(dateKey);
+
+  // Streak
+  const streak=calcStreak();
+  document.getElementById('streakBadge').innerHTML=`🔥 ${streak} day${streak!==1?'s':''} streak`;
+
+  // Day chips
+  let dc='';
+  DSHORT.forEach((d,i)=>{
+    const chipDate=new Date(todayDate);
+    chipDate.setDate(chipDate.getDate()+(i-todayDayIdx));
+    const dk=getDateKey(chipDate);
+    const dn=DAYS[i];
+    const comp=getDayCompletion(dk,dn);
+    const dotColor=comp>=0.8?'#22C55E':comp>=0.4?'#F59E0B':'#EF4444';
+    const hasData=(loadData()[dk]||[]).length>0;
+    dc+=`<button class="day-chip ${i===selDay?'active':''} ${i===todayDayIdx?'today':''}" onclick="selDay=${i};filt=null;renderSchedule()">
+      ${hasData?`<span class="check-dot" style="background:${dotColor}"></span>`:''}
+      <span class="day-name">${d}</span>
+      <span class="day-date">${chipDate.getDate()}/${chipDate.getMonth()+1}</span>
+    </button>`;
+  });
+  document.getElementById('dayScroll').innerHTML=dc;
+
+  // Progress ring
+  const doneCount=completed.filter(id=>allTasks.some(t=>t.id===id)).length;
+  const total=allTasks.length;
+  const pct=Math.round((doneCount/total)*100);
+  const r=26,circ=2*Math.PI*r,offset=circ-(pct/100)*circ;
+  const gymDone=completed.filter(id=>allTasks.some(t=>t.id===id&&t.y==='gym')).length;
+  const workDone=completed.filter(id=>allTasks.some(t=>t.id===id&&t.y==='work')).length;
+  const gymTotal=allTasks.filter(t=>t.y==='gym').length;
+  const workTotal=allTasks.filter(t=>t.y==='work').length;
+
+  document.getElementById('progressRing').innerHTML=`
+  <div class="progress-section">
+    <div class="ring-wrap">
+      <svg width="64" height="64"><circle cx="32" cy="32" r="${r}" fill="none" stroke="#1C2333" stroke-width="5"/>
+      <circle cx="32" cy="32" r="${r}" fill="none" stroke="${pct>=80?'#22C55E':pct>=40?'#F59E0B':'#EF4444'}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${offset}" style="transition:stroke-dashoffset .5s"/></svg>
+      <div class="ring-text"><span class="ring-pct">${pct}%</span><span class="ring-label">Done</span></div>
+    </div>
+    <div class="progress-stats">
+      <div class="mini-stat"><div class="ms-val" style="color:#22C55E">${doneCount}/${total}</div><div class="ms-lbl">Tasks</div></div>
+      <div class="mini-stat"><div class="ms-val" style="color:#EF4444">${gymDone}/${gymTotal}</div><div class="ms-lbl">Gym</div></div>
+      <div class="mini-stat"><div class="ms-val" style="color:#3B82F6">${workDone}/${workTotal}</div><div class="ms-lbl">YouTube</div></div>
+      <div class="mini-stat"><div class="ms-val" style="color:#F59E0B">${total-doneCount}</div><div class="ms-lbl">Remaining</div></div>
+    </div>
+  </div>`;
+
+  // Gym
+  const g=GYM[dayName];
+  document.getElementById('gymBadge').innerHTML=`
+  <div class="gym-strip ${g?'on':'off'}">
+    <span class="g-icon">${g?'💪':'😴'}</span>
+    <span class="g-text ${g?'on':'off'}">${g||'Rest Day — Active Recovery'}</span>
+  </div>`;
+
+  // Filters
+  let fb=`<button class="f-pill ${!filt?'on':''}" style="--fc:#44BBA4;--fbg:rgba(68,187,164,.1)" onclick="filt=null;renderSchedule()">All</button>`;
+  Object.entries(TC).forEach(([k,v])=>{
+    if(k==='sleep')return;
+    fb+=`<button class="f-pill ${filt===k?'on':''}" style="--fc:${v.color};--fbg:${v.color}14" onclick="filt=filt==='${k}'?null:'${k}';renderSchedule()">${v.icon} ${v.label}</button>`;
+  });
+  document.getElementById('filters').innerHTML=fb;
+
+  // Tasks
+  let tl='';
+  tasks.forEach((item,i)=>{
+    const c=TC[item.y];
+    const isDone=completed.includes(item.id);
+    const isCur=isToday&&allTasks.indexOf(item)===curIdx;
+    tl+=`<div class="task-item ${isDone?'done':''} ${isCur?'current-task':''}" style="animation-delay:${i*30}ms" onclick="toggleTask('${dateKey}','${item.id}');renderSchedule()" ${isCur&&!filt?'id="curTask"':''}>
+      <div class="checkbox"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg></div>
+      <div class="type-dot" style="background:${c.color}"></div>
+      <div class="task-body">
+        <div class="task-top">
+          <span class="task-time" style="color:${c.color}">${item.t}</span>
+          ${isCur?'<span class="now-tag">Now</span>':''}
+          ${item.d?`<span class="task-dur">${item.d}</span>`:''}
+        </div>
+        <div class="task-name">${item.k}</div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('taskList').innerHTML=tl;
+
+  // scroll to current
+  if(isToday&&!filt)setTimeout(()=>{const el=document.getElementById('curTask');if(el)el.scrollIntoView({behavior:'smooth',block:'center'})},350);
+}
+
+// ========== RENDER STATS ==========
+function renderStats(){
+  const data=loadData();
+  const streak=calcStreak();
+
+  // Last 7 days completion
+  let weekHtml='<div class="week-grid">';
+  DSHORT.forEach(d=>{weekHtml+=`<div class="wg-day">${d}</div>`});
+  for(let i=6;i>=0;i--){
+    // Map to correct day starting from 6 days ago
+  }
+  // Actually build for this week Mon-Sun
+  let weekPcts=[];
+  for(let i=0;i<7;i++){
+    const d=new Date(todayDate);
+    d.setDate(d.getDate()+(i-todayDayIdx));
+    const dk=getDateKey(d);
+    const dn=DAYS[i];
+    const tasks=S[dn];
+    const done=(data[dk]||[]).filter(id=>tasks.some(t=>t.id===id)).length;
+    const pct=Math.round(done/tasks.length*100);
+    weekPcts.push(pct);
+    const bg=pct>=80?'rgba(34,197,94,.2)':pct>=40?'rgba(245,158,11,.2)':pct>0?'rgba(239,68,68,.15)':'var(--card)';
+    const col=pct>=80?'#22C55E':pct>=40?'#F59E0B':pct>0?'#EF4444':'var(--muted)';
+    weekHtml+=`<div class="wg-cell" style="background:${bg};color:${col}">${pct}%</div>`;
+  }
+  weekHtml+='</div>';
+
+  // Category breakdown for today
+  const selDate=new Date(todayDate);
+  const dateKey=getDateKey(selDate);
+  const todayTasks=S[DAYS[todayDayIdx]];
+  const todayDone=data[dateKey]||[];
+  let catHtml='';
+  Object.entries(TC).forEach(([k,v])=>{
+    if(k==='sleep')return;
+    const catTasks=todayTasks.filter(t=>t.y===k);
+    const catDone=catTasks.filter(t=>todayDone.includes(t.id)).length;
+    const pct=catTasks.length?Math.round(catDone/catTasks.length*100):0;
+    catHtml+=`<div class="bar-row">
+      <span class="bar-label">${v.icon} ${v.label}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${v.color}">${pct>15?pct+'%':''}</div></div>
+    </div>`;
+  });
+
+  // Total completed all time
+  let totalDone=0,totalPossible=0;
+  Object.entries(data).forEach(([dk,arr])=>{
+    totalDone+=arr.length;
+  });
+  // Avg completion
+  const keys=Object.keys(data).filter(k=>data[k].length>0);
+  let avgPct=0;
+  if(keys.length){
+    let sum=0;
+    keys.forEach(k=>{
+      const d=new Date(k+'T12:00:00');
+      const di=d.getDay();
+      const dn=DAYS[di===0?6:di-1];
+      const tasks=S[dn];
+      if(tasks)sum+=data[k].filter(id=>tasks.some(t=>t.id===id)).length/tasks.length*100;
+    });
+    avgPct=Math.round(sum/keys.length);
+  }
+
+  document.getElementById('statsContent').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div class="stats-card" style="text-align:center">
+        <div class="big-number" style="color:#F59E0B">${streak}</div>
+        <div class="big-label">🔥 Day Streak</div>
+      </div>
+      <div class="stats-card" style="text-align:center">
+        <div class="big-number" style="color:#44BBA4">${avgPct}%</div>
+        <div class="big-label">📈 Avg Completion</div>
+      </div>
+    </div>
+    <div class="stats-card">
+      <h3>📅 This Week</h3>
+      ${weekHtml}
+    </div>
+    <div class="stats-card">
+      <h3>📊 Today's Categories</h3>
+      ${catHtml}
+    </div>
+    <div class="stats-card" style="text-align:center">
+      <div class="big-number" style="color:#3B82F6">${totalDone}</div>
+      <div class="big-label">Total Tasks Completed (All Time)</div>
+    </div>
+    <div class="stats-card">
+      <h3>💡 Tips</h3>
+      <p style="font-size:12px;color:var(--muted);line-height:1.6">
+        Complete 80%+ tasks daily to keep your streak alive. The streak counter needs at least 50% completion to count a day. Tap any task to check it off — your progress is saved automatically.
+      </p>
+    </div>
+  `;
+}
+
+// ========== RENDER SETTINGS ==========
+function renderSettings(){
+  const notif=localStorage.getItem('grind_notif')==='true';
+  document.getElementById('settingsContent').innerHTML=`
+    <div class="setting-item">
+      <div class="s-left"><span class="s-icon">👤</span><div><div class="s-text">Mayank</div><div class="s-sub">9 Channels • Ambikapur</div></div></div>
+    </div>
+    <div class="setting-item">
+      <div class="s-left"><span class="s-icon">🔔</span><div><div class="s-text">Task Reminders</div><div class="s-sub">Get notified for upcoming tasks</div></div></div>
+      <button class="toggle ${notif?'on':''}" onclick="toggleNotif()"><div class="toggle-knob"></div></button>
+    </div>
+    <div class="setting-item">
+      <div class="s-left"><span class="s-icon">📊</span><div><div class="s-text">Data</div><div class="s-sub">${Object.keys(loadData()).length} days tracked</div></div></div>
+    </div>
+    <div class="setting-item">
+      <div class="s-left"><span class="s-icon">📱</span><div><div class="s-text">Version</div><div class="s-sub">Grind Schedule v2.0</div></div></div>
+    </div>
+    <button class="danger-btn" onclick="if(confirm('Reset ALL tracking data? This cannot be undone.')){localStorage.removeItem('grind_v2');alert('Data cleared!');renderSchedule();renderSettings()}">🗑️ Reset All Tracking Data</button>
+    <p style="text-align:center;font-size:11px;color:var(--muted);margin-top:20px;line-height:1.5">
+      Built with 💚 for Mayank<br>Ambikapur Grind Mode 🔥
+    </p>
+  `;
+}
+function toggleNotif(){
+  const cur=localStorage.getItem('grind_notif')==='true';
+  localStorage.setItem('grind_notif',!cur);
+  if(!cur&&'Notification' in window)Notification.requestPermission();
+  renderSettings();
+}
+
+// ========== PWA INSTALL ==========
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;
+  document.getElementById('installBanner').classList.remove('hidden');
+});
+document.getElementById('installBtn').addEventListener('click',async()=>{
+  if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null}
+  document.getElementById('installBanner').classList.add('hidden');
+});
+document.getElementById('installX').addEventListener('click',()=>document.getElementById('installBanner').classList.add('hidden'));
+window.addEventListener('appinstalled',()=>document.getElementById('installBanner').classList.add('hidden'));
+
+// Inline manifest + SW
+const ICON192='data:image/png;base64,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';
+const ICON512='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAYAAAD0eNT6AAAWWklEQVR4nO3dyZddR33A8epWa2i1JKs1tozATAaPGCM84wEDMRLZkZyT/BGckz8iuyw5OVllmZMVywAGhyS2sMFMPk4c4mAgDhBrsCwsybI1dhZC2JK7X/d7fetW1f19PksP795F16++fd+rflNz2+YXEwAQynTpGwAA+icAACAgAQAAAQkAAAhIAABAQAIAAAISAAAQkAAAgIAEAAAEJAAAICABAAABCQAACEgAAEBAAgAAAhIAABCQAACAgAQAAAQkAAAgIAEAAAEJAAAISAAAQEACAAACEgAAEJAAAICABAAABCQAACAgAQAAAQkAAAhIAABAQAIAAAISAAAQkAAAgIAEAAAEJAAAICABAAABCQAACEgAAEBAAgAAAhIAABCQAACAgAQAAAQkAAAgIAEAAAEJAAAISAAAQEACAAACEgAAEJAAAICABAAABCQAACAgAQAAAQkAAAhIAABAQAIAAAISAAAQkAAAgIAEAAAEJAAAICABAAABCQAACEgAAEBAAgAAAhIAABDQTOkbALrxwDe+3tu1nvvq13q7FpDH1Ny2+cXSNwEsr8+NvWtCAeolAKACLW/ykxIHUJYAgB5F3OjHJQygHwIAMrHZd0cUQPcEAHTEht8fQQBrJwBgQjb8eggCGJ8AgFWy4bdDEMDKBACMYNNvnxiApQkAuI5Nf7jEALxLAECy6UckBohOABCWTZ+rxAARCQBCsemzEjFAFAKAEGz8jEsIMHQCgMGy6dMVMcAQCQAGx8ZPLkKAIREADIaNn74IAYZAANA0mz6liQFaJQBoko2f2ggBWiMAaIqNn9oJAVohAGiCjZ/WCAFqJwComo2f1gkBaiUAqJKNn6ERAtRGAFAVGz9DJwSoxXTpG4CrbP5E4OecWngCQHEGIlF5GkBJAoBibPxwhRCgBAFA72z8sDQhQJ98BoBe2fxhedYHffIEgF4YbDAeTwPIzRMAsrP5w/isG3LzBIBsDDDohqcB5OAJAFnY/KE71hM5eAJApwwqyMvTALriCQCdsflDftYZXfEEgDUzkKAMTwNYC08AWBObP5Rj/bEWAoCJGT5QnnXIpLwFwNgMHKiTtwQYhycAjMXmD/WyPhmHAGDVDBeon3XKankLgBUZKNAmbwkwiicAjGTzh3ZZv4wiAFiW4QHts45ZjgBgSYYGDIf1zFJ8BoBrGBQwbD4XwFWeAPBHNn8YPuucqwQAKSVDASKx3klJAJAMA4jIukcABGcIQFzWf2wCIDCLHzAH4hIAQVn0wFXmQUwCICCLHbieuRCPAAjGIgeWYz7E4g8BBWFhA+PwB4OGzxOAAGz+wLjMjeETAANnEQOTMj+GTQAMmMULrJU5MlwCYKAsWqAr5skwCQAACEgADJBaB7pmrgyPABgYixTIxXwZFgEwIBYnkJs5MxwCYCAsSqAv5s0wCIABsBiBvpk77RMAjbMIgVLMn7YJgIZZfEBp5lC7BECjLDqgFuZRmwRAgyw2oDbmUnsEAAAEJAAao7KBWplPbREADbG4gNqZU+0QAI2wqIBWmFdtEAANsJiA1phb9RMAABCQAKicigZaZX7VTQBUzOIBWmeO1UsAVMqiAYbCPKuTAACAgARAhdQyMDTmWn0EQGUsEmCozLe6CICKWBzA0Jlz9RAAABCQAKiEKgaiMO/qIAAqYDEA0Zh75QkAAAhIABSmgoGozL+yBEBBfviB6MzBcgQAAAQkAApRvQBXmIdlCIAC/LADXMtc7J8AAICABEDPVC7A0szHfgmAHvnhBhjNnOyPAACAgARAT1QtwOqYl/0QAAAQkADogZoFGI+5mZ8AAICABEBmKhZgMuZnXgIgIz+8AGtjjuYjAAAgIAGQiWoF6IZ5mocAAICABEAGahWgW+Zq9wQAAAQkADqmUgHyMF+7JQAAICAB0CF1CpCXOdsdAQAAAQmAjqhSgH6Yt90QAAAQkADogBoF6Je5u3YCAAACEgAAEJAAWCOPoQDKMH/XRgAAQEACYA3UJ0BZ5vDkBAAABCQAJqQ6AepgHk9GAABAQAIAAAISABPwuAmgLuby+AQAAAQkAMakMgHqZD6PRwAAQEACAAACEgBj8HgJoG7m9OoJAAAISAAAQEACYJU8VgJog3m9OgIAAAKaKX0D0IdjTz2bfvl3/1j6Nkb64F8cSvv//GDp28jmxA9eSP/9N39f+jZG+uBf/mna/2dPlL4N6IUnAKvgcRJ9OPrk4bR46VLp28jmyD/9W+lbIBBze2UCACpx/uSpdOK5F0rfRhZnX/1dOvWfr5S+DeA9BABU5Mg3h/lb8mt++4fqCIAVeIxEn06//Ov01q9+U/o2OnXx9Fvp9Wd+XPo2CMj8Hk0AQGVeG9hTgKNPPZsun79Q+jaA6wgAqMyJwz9NF0+dKX0bnVi8fDkd/fYzpW8DWIIAGMHjI0q4fOFCOvrUs6VvoxNvPP9iOvf6ydK3QWDm+PIEAFToyJOH0+Lly6VvY80c/YN6CQCo0PnXT6Y3nn+x9G2siaN/UDcBAJVq/Uigo39QNwGwDO8bUdqpl15JZ1/9v9K3MRFH/6iJeb40AQAVO/KtNn+LdvQP6icAoGLHn/5xunjmbOnbGIujf9AGAQAVu3zufDr2z8+Vvo2xOPoHbRAAS/B+ETU58u1nUlpcLH0bq+boHzUy199PAEDlzh07kU7++D9K38aqOPoH7RAA0IBWvh/A0T9ohwCABrz54svp7d8eKX0bIzn6B20RANfxPhG1OvKtp0vfwkiO/lE78/1aAgAacfxfn0+Xzr5d+jaW5OgftEcAQCMuvXMuHfuXH5a+jSU5+gftEQDQkCPffLrKI4GO/kF7BAA05J0jx9Pvf/bz0rdxDUf/oE0C4D18QIQW1HYk0NE/WmLOv0sAQGN+/8LP0zuvHS99GyklR/+gZQIAWrO4WM23BDr6B+0SANCgY9/7Ybr0zrmi9+DoH7RNAECDLr39Tjpe+Eigo3/QNgEAjTryrbJHAh39g7YJgD/wyVBa8/bvjqY3X3y5yLUd/aNl5v0VAgAaVupIoKN/0D4BAA07+ZOX0rljJ3q9pqN/MAwCADJat3k2rds8m+8Ci4u9f0tgH0f/Nuyaz/r6gACArKY3zKQ9j9+f9RrHvveDdPnc+azXuKqPo3833HVLmt23J+s1AAEA2S0cfCSlqalsr3/xzNl0/OkfZXv99+rj6N++Q49mfX3gCgEAmW1a2JXmP3Nb1msc6enDgLmP/m3auyvNH7g96zWAKwRAciSE/BYy/1Z79n9fS6de+kXea/Rw9G/h4MNZn5bAVea+AIBebL/rljR7Y973tXMfCcx99G9644a0+/EHsl4DeJcAgD5MTWV/CnDy+X/P9v78xTNnsx/92/3YvWlmLuOJCeAaAgB6svvz96V1s5uyvX7OT+gf/e73sx/98+E/6JcAgJ6s27Qx7Xn8vqzXOPrUs+nyhW436l6O/t35yTS7fyHrNYBrCQDo0cLBR/MeCTz9Vnr9mZ90+pp9HP1bOPRI1tcH3k8AQI827dudtt99a9ZrdH0kMPfRv417dqQd99yZ9RrA+wkA6Nm+g3nf637r179Np//rV528Vi9H/76c9w8lAUsTANCz7XffmjY1ciSwj6N/e77g6B+UIACgb1NTV37rzeiNH7yQzr/x5ppeo5ejf4/ck2a2bM56DWBp4QPAX4OihD2P35/WzW7M9vqLly6no985vKbX6OPoX+6/jQCjRJ//4QMASlg3uzHtfizzkcDvfD8tXrw00f/by9G/O25Omz+0L+s1gOUJAChk36G8RwIvvHk6vf79yY4E9nL07yuPZX19YDQBAIVsunFP2n7XLVmvceSbT0/4/2U++rd7R5r/7B1ZrwGMJgCgoIWv5H0P/Mwrr6Yzv/ifsf6fs6/+Lp16Kfe3/j2SpqaNHyjJCoSC5u++LW3atzvrNcY9Epj96N+G9Y7+QQUEAJQ0NZUWDuY9Enji2Z+lC78/var/tpejf486+gc1EABQ2J7H70/rNmU8EnjxUjr63dUdCezl6F/mv4QIrI4AgMLWzW5Kuz+f+Ujgk4fT4qXRRwL7OPq37fab0+abbsx6DWB1BABUYOFg3r+Hf/7kqXTiuRdG/jd9HP3b5w//QDUEAFRg9gN70/ZPfTLrNVY62pf96N+u+TR/r2/9g1oIAKhE7j+Le/rlX6e3fvWbJf9dH0f/9n75YUf/oCJWI1Ri/sDtadPCrqzXWO5IYB9H//Z+8cGs1wDGIwCgFj18S+CJwz9NF0+dueaf9XH0b9fDn00zW+eyXgMYjwCAiuz5wv1peuOGbK9/+cKFdPSpZ6/5Z771D2ISAFCRdZtns39L4JEnD6fFy5dTSj0d/bvt42nuwx/Ieg1gfAIAKrPvUN63Ac6/fjK98fyLKaW+vvXPb/9QIwEAlZndv5Bu6OlIYO6jfxt2zacd934q6zWAyQgAqNC+rzyW9fVPvfRKOv70j/J/65+jf1AtKxMqNH/g9rRpb94jgb/823/I+vrT69envb71D6olAKBGU1Np4eDDWS+xeHH0dwOs1a6HD6SZbVuyXgOYnACASu1+/IGsRwJzc/QP6iYAoFIzc7Np92P3lr6NiWy79WNp7iP7S98GMIIAgIq1+u15fvuH+gkAqNjs/oV0w52fKH0bY9mwc3vacd9dpW8DWIEAgMq19tv0whMPp6l1RgvUziqFyu245860cc/O0rexKtPrZ9KeL/nWP2hB+AB47qtfK30LMNrUVFr4ct4jgV3Z+bkDab2jfzQi+vwPHwDQgj1faONIYKsfWoSIBAA0YGbL5rT7kXtK38ZIW2/5aJr76AdL3wawSgIAGlH7hwH99g9tEQDQiM0f2pduuOPm0rexpA07bkg77v906dsAxiAAoCG1PgXY6+gfNMeKhYbM33Nn2rh7R+nbuMb0+pm0908eKn0bwJgEADRkanq6uiOBOx/6jKN/0CABAI3Z88UH0/SG9aVv44/2HXqs9C0AExAA0JiZLZvTrkqOBG795EfS3Mcc/YMWCYDkr0HRnlqO3NX6oURYibkvAKBJm2+6MW27/eNF72HD/La084FPF70HYHICABpV+r33K0f/1hW9B2ByAgAaNX/vnWnjrvki156aWZf2fsnRP2iZAIBGTU1Pp72FjgTueuhAWr99a5FrA90QANCwvYWOBC4ceqT3awLdEgDQsJmtc2nXw5/t9ZpbP/HhtOXjN/V6TaB7AuAPHAmhVX0fxXP0j9aZ91cIAGjc3Ic/kLbd1s+RwPXbt6WdD97dy7WAvAQADEBfv5UvPPE5R/9gIAQADMCO+z6VNmQ+Ejg1s863/sGACAAYgKnp6bTwxOeyXmPng3en9du3Zb0G0B8BAAOx90sPpen1+Y4Elv7Lg0C3BMB7+GQoLbtyJPBAltfecvNNacvNjv7RPnP+XQIABiTXhwH99g/DIwBgQOY+sj9tvfVjnb7m+u1bHf2DAZopfQNAt+74678qfQtAAzwBAICABMB1fEAEYJjM92sJAAAISAAAQEACAAACEgBL8D4RwLCY6+8nAAAgIAEAAAEJAAAISAAsw/tFAMNgni9NAABAQAIAAAISAAAQkAAYwftGAG0zx5cnAAAgIAEAAAEJgBV4fATQJvN7NAEAAAEJAAAISACsgsdIAG0xt1cmAAAgIAEAAAEJgFXyOAmgDeb16kzNbZtfLH0TrXjgG18vfQsArEAArI4nAAAQkAAYg6oEqJs5vXoCAAACEgAAEJAAGJPHSwB1Mp/HIwAAICABMAGVCVAXc3l8AgAAAhIAABCQAJiQx00AdTCPJyMAACAgAbAGqhOgLHN4cgIAAAISAGukPgHKMH/XRgAAQEACAAACEgAd8BgKoF/m7toJAAAISAB0RI0C9MO87YYAAICABECHVClAXuZsdwQAAAQkADqmTgHyMF+7JQAAICABkIFKBeiWudo9AQAAAQmATNQqQDfM0zwEAAAEJAAyUq0Aa2OO5iMAMvPDCzAZ8zMvAQAAAQmAHqhYgPGYm/kJAAAISAD0RM0CrI552Q8BAAABCYAeqVqA0czJ/giAnvnhBlia+dgvAQAAAQmAAlQuwLXMxf4JgEL8sANcYR6WIQAAICABUJDqBaIzB8sRAIX54QeiMv/KEgAAEJAAqIAKBqIx98oTAJWwGIAozLs6CAAACEgAVEQVA0NnztVDAFTG4gCGynyriwCokEUCDI25Vh8BAAABCYBKqWVgKMyzOgmAilk0QOvMsXoJgMpZPECrzK+6CQAACEgANEBFA60xt+onABphMQGtMK/aIAAaYlEBtTOn2iEAGmNxAbUyn9oiAAAgIAHQIJUN1MZcao8AaJTFBtTCPGqTAGiYRQeUZg61SwA0zuIDSjF/2iYABsAiBPpm7rRPAAyExQj0xbwZBgEwIBYlkJs5MxwCYGAsTiAX82VYBMAAWaRA18yV4REAABCQABgotQ50xTwZJgEwYBYtsFbmyHAJgIGzeIFJmR/DJgACsIiBcZkbwzc1t21+sfRN0J8HvvH10rcAVMzGH4cnAMFY3MByzIdYBEBAFjlwPXMhHgEQlMUOXGUexCQAArPoAXMgLgEQnMUPcVn/sQkADAEIyLpHAJBSMgwgEuudlAQA72EowPBZ51zlDwGxJH8wCIbFxs/1PAFgSYYFDIf1zFIEAMsyNKB91jHLEQCMZHhAu6xfRvEZAFbN5wKgDTZ+VsMTAFbNUIH6WaeslgBgLIYL1Mv6ZBzeAmBi3hKAOtj4mYQnAEzM0IHyrEMmJQBYE8MHyrH+WAtvAdAZbwlAP2z8dMETADpjKEF+1hld8QSALDwNgG7Z+OmaJwBkYVhBd6wncvAEgOw8DYDJ2PjJyRMAsjPEYHzWDbl5AkCvPA2A0Wz89MUTAHpluMHyrA/65AkAxXgaAFfY+ClBAFCcECAqGz8lCQCqIQSIwsZPDXwGgGoYikTg55xaeAJAlTwNYGhs/NRGAFA1IUDrbPzUSgDQBCFAa2z81E4A0BQhQO1s/LRCANAkIUBtbPy0RgDQNCFAaTZ+WiUAGAwxQF9s+gyBAGBwhAC52PgZEgHAYAkBumLjZ4gEACGIAcZl02foBAChCAFWYuMnCgFAWGKAq2z6RCQAIImBiGz6RCcA4DpiYLhs+vAuAQAjiIH22fRhaQIAVkkMtMOmDysTADAhQVAPGz6MTwBARwRBf2z4sHYCADIRBN2x4UP3BAD0SBSszGYP/RAAUIGIYWCjh7IEAFSu5TiwyUO9BAAMRJ+hYGOH9gkAAAhouvQNAAD9EwAAEJAAAICABAAABCQAACAgAQAAAQkAAAhIAABAQAIAAAISAAAQkAAAgIAEAAAEJAAAICABAAABCQAACEgAAEBAAgAAAhIAABCQAACAgAQAAAQkAAAgIAEAAAEJAAAISAAAQEACAAACEgAAEJAAAICABAAABCQAACAgAQAAAQkAAAhIAABAQAIAAAISAAAQkAAAgIAEAAAEJAAAICABAAABCQAACEgAAEBAAgAAAhIAABCQAACAgAQAAAQkAAAgIAEAAAEJAAAISAAAQEACAAACEgAAEJAAAICABAAABCQAACAgAQAAAQkAAAhIAABAQAIAAAISAAAQkAAAgIAEAAAEJAAAICABAAAB/T84S6g+nqbojQAAAABJRU5ErkJggg==';
+const manifest={name:"Mayank's Grind Schedule",short_name:"GrindSchedule",start_url:location.href,display:"standalone",background_color:"#080A0E",theme_color:"#44BBA4",orientation:"portrait",icons:[{src:ICON192,sizes:"192x192",type:"image/png"},{src:ICON512,sizes:"512x512",type:"image/png",purpose:"any maskable"}]};
+const mBlob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+const mLink=document.createElement('link');mLink.rel='manifest';mLink.href=URL.createObjectURL(mBlob);document.head.appendChild(mLink);
+
+const swCode=`const C='grind-v2';self.addEventListener('install',e=>{self.skipWaiting()});self.addEventListener('activate',e=>{self.clients.claim()});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(resp=>{const c=resp.clone();caches.open(C).then(ca=>ca.put(e.request,c));return resp}).catch(()=>caches.match(e.request))))});`;
+if('serviceWorker' in navigator){const b=new Blob([swCode],{type:'application/javascript'});navigator.serviceWorker.register(URL.createObjectURL(b),{scope:location.pathname}).catch(()=>{})}
+
+// ========== INIT ==========
+renderSchedule();
+setInterval(()=>{if(currentPage==='Schedule'&&selDay===todayDayIdx)renderSchedule()},60000);
+</script>
+</body>
+</html>
